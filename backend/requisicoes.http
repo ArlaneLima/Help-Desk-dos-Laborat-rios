@@ -1,0 +1,64 @@
+@base = http://localhost:3000
+
+### Health
+GET {{base}}/health
+
+### RF1 - abrir chamado P1
+POST {{base}}/chamados
+Content-Type: application/json
+
+{ "titulo": "Projetor sem imagem", "descricao": "Projetor do Lab 3 liga mas nao exibe imagem", "laboratorio": "Lab 3", "prioridade": "P1" }
+
+### RF1 - abrir chamado P3
+POST {{base}}/chamados
+Content-Type: application/json
+
+{ "titulo": "Rede lenta", "descricao": "Internet muito lenta no Lab 1", "laboratorio": "Lab 1", "prioridade": "P3" }
+
+### CA5 - prioridade invalida (400)
+POST {{base}}/chamados
+Content-Type: application/json
+
+{ "titulo": "Teste", "descricao": "Prioridade invalida", "laboratorio": "Lab 1", "prioridade": "P7" }
+
+### RF3 - fila ordenada (CA4: P1 antes de P3)
+GET {{base}}/chamados
+
+### RF3 - filtro por status
+GET {{base}}/chamados?status=aberto
+
+### Buscar um chamado
+GET {{base}}/chamados/1
+
+### Chamado inexistente (404)
+GET {{base}}/chamados/9999
+
+### CA1 - aberto -> fechado direto (409)
+PATCH {{base}}/chamados/1/status
+Content-Type: application/json
+
+{ "status": "fechado" }
+
+### aberto -> em_atendimento (200)
+PATCH {{base}}/chamados/1/status
+Content-Type: application/json
+
+{ "status": "em_atendimento" }
+
+### CA2 - em_atendimento -> resolvido sem solucao (400)
+PATCH {{base}}/chamados/1/status
+Content-Type: application/json
+
+{ "status": "resolvido" }
+
+### em_atendimento -> resolvido com solucao (200)
+PATCH {{base}}/chamados/1/status
+Content-Type: application/json
+
+{ "status": "resolvido", "solucao": "Troquei o cabo HDMI" }
+
+### resolvido -> fechado (200)
+PATCH {{base}}/chamados/1/status
+Content-Type: application/json
+
+{ "status": "fechado" }
