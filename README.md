@@ -4,8 +4,8 @@ Cloud Challenge, Desafio 04 (Cloud Computing, Senac 2026.2, prof. Roni Maciel).
 
 | Item | Valor |
 |---|---|
-| Grupo | [PREENCHER: OTávio Augusto, Arlane, Dayane Oleiveira, Daniel Cabral, Ian, Sabrina:g03 ] |
-| Integrantes e papéis | [PREENCHER: nome, papel DEV / DADOS / NUVEM / QA] |
+| Grupo | [OTávio Augusto, Arlane, Dayane Oleiveira, Daniel Cabral, Ian, Sabrina:g03 ] |
+| Integrantes e papéis | [ Otávio, Ian DEV / Dayana, Arlane DADOS / Otávio, Daniel, Sabrina NUVEM / Otávio, Sabrina QA] |
 | Nível de implantação | [PREENCHER: A, B ou C] |
 | URL pública (nível A) | [PREENCHER] |
 | Vídeo do pitch (90 s) | [PREENCHER] |

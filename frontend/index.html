@@ -56,9 +56,22 @@ li:last-child{border-bottom:0}
 .prazo{font-size:.86rem;color:var(--mute)}.prazo.venceu{color:var(--alert);font-weight:600}
 .acoes{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem}
 .acoes form{display:grid;width:100%;max-width:30rem;margin:0}
+.acoes form[hidden]{display:none}
 #vazio{padding:2rem 1rem;color:var(--mute)}
 #aviso{position:fixed;left:50%;bottom:1rem;transform:translateX(-50%);max-width:min(32rem,92vw);background:var(--ink);color:var(--paper);padding:.7rem 1rem;border-radius:2px;display:none;border-left:6px solid var(--signal)}
 #aviso.erro{border-left-color:var(--alert)}#aviso.show{display:block}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:.75rem;margin-bottom:1rem}
+.kpi{background:var(--board);border:1px solid var(--line);border-top:4px solid var(--line);padding:.7rem .9rem}
+.kpi b{display:block;font:700 2rem/1 var(--head)}
+.kpi span{font-size:.82rem;color:var(--mute)}
+.kpi.fila{border-top-color:var(--p3)}.kpi.atend{border-top-color:var(--signal)}
+.kpi.ok{border-top-color:var(--moss)}.kpi.venc{border-top-color:var(--alert)}.kpi.venc.tem b{color:var(--alert)}
+.busca{display:flex;gap:.5rem;margin:0 0 .75rem}
+.busca input{max-width:26rem}
+.legenda{display:flex;flex-wrap:wrap;gap:.35rem 1rem;font-size:.8rem;color:var(--mute);margin:0 0 .75rem}
+.legenda i{display:inline-block;width:.7rem;height:.7rem;margin-right:.3rem;background:var(--cor);vertical-align:-.05rem}
+.prio small{display:block;font:600 .62rem/1.2 var(--body);letter-spacing:.05em;text-transform:uppercase;margin-top:.3rem}
+footer a{color:var(--moss)}
 footer{padding:1rem clamp(1rem,4vw,2.5rem) 2rem;color:var(--mute);font-size:.88rem}
 footer label{display:flex;gap:.5rem;align-items:center;font-weight:400}footer input{width:auto}
 @media (prefers-reduced-motion:no-preference){#aviso.show{animation:sobe .2s ease-out}@keyframes sobe{from{opacity:0;transform:translate(-50%,.5rem)}}}
@@ -88,13 +101,20 @@ footer label{display:flex;gap:.5rem;align-items:center;font-weight:400}footer in
     </form>
   </details>
   <section aria-label="Fila de atendimento">
+    <div class="kpis" id="kpis" aria-label="Resumo dos chamados"></div>
+    <div class="busca"><input id="busca" type="search" placeholder="Buscar por título, laboratório ou descrição" aria-label="Buscar chamados"></div>
+    <p class="legenda" aria-label="Legenda de prioridades">
+      <span style="--cor:var(--p1)"><i></i>P1 Crítica · 4 h</span><span style="--cor:var(--p2)"><i></i>P2 Alta · 8 h</span>
+      <span style="--cor:var(--p3)"><i></i>P3 Média · 24 h</span><span style="--cor:var(--p4)"><i></i>P4 Baixa · 72 h</span>
+    </p>
     <nav class="abas" id="abas" role="tablist" aria-label="Filtrar por status"></nav>
     <ul id="lista"></ul>
-    <p id="vazio" hidden>Nenhum chamado nesta visão. Abra um chamado no formulário.</p>
+    <p id="vazio" hidden></p>
   </section>
 </main>
 <footer>
   <label><input type="checkbox" id="demo"> Modo demonstração: mostrar todas as mudanças de status, inclusive as inválidas, para ver a API recusar</label>
+  <p>Cloud Challenge, Desafio 04 · Grupo 03 · <a href="/health">estado da API e do banco</a></p>
 </footer>
 <div id="aviso" role="status" aria-live="polite"></div>
 <script>
@@ -105,7 +125,8 @@ const PROXIMOS = { aberto: ['em_atendimento'], em_atendimento: ['aberto', 'resol
 const ROTULO = { 'aberto>em_atendimento': 'Iniciar atendimento', 'em_atendimento>aberto': 'Devolver à fila', 'em_atendimento>resolvido': 'Resolver', 'resolvido>fechado': 'Fechar chamado' };
 const ABAS = [['fila', 'Na fila', 'aberto,em_atendimento'], ['aberto', 'Abertos', 'aberto'], ['em_atendimento', 'Em atendimento', 'em_atendimento'],
               ['resolvido', 'Resolvidos', 'resolvido'], ['fechado', 'Fechados', 'fechado'], ['todos', 'Todos', '']];
-let aba = 'fila', resumo = null;
+const NOMEPRIO = { P1: 'Crítica', P2: 'Alta', P3: 'Média', P4: 'Baixa' };
+let aba = 'fila', resumo = null, cache = [];
 
 const $ = (s) => document.querySelector(s);
 function el(tag, attrs = {}, ...filhos) {
@@ -159,7 +180,7 @@ function acoes(c) {
 }
 
 function linha(c) {
-  const li = el('li', { style: `--cor:${COR[c.prioridade]}` }, el('div', { class: 'prio', 'aria-label': 'Prioridade ' + c.prioridade }, c.prioridade));
+  const li = el('li', { style: `--cor:${COR[c.prioridade]}` }, el('div', { class: 'prio', 'aria-label': 'Prioridade ' + c.prioridade }, c.prioridade, el('small', {}, NOMEPRIO[c.prioridade])));
   const corpo = el('div', { class: 'corpo' }, el('h2', {}, c.titulo), el('div', { class: 'lab' }, `${c.laboratorio}, aberto em ${hm(c.aberto_em)}`), el('p', {}, c.descricao));
   if (c.solucao) corpo.append(el('p', { class: 'sol' }, 'Solução: ' + c.solucao));
   corpo.append(el('div', { class: 'estado' }, el('span', { class: 'tag' }, NOMES[c.status]), c.sla_vencido ? el('span', { class: 'tag venceu' }, 'SLA vencido') : null), regua(c), acoes(c));
@@ -173,13 +194,27 @@ function desenharAbas() {
     b.onclick = () => { aba = k; carregar(); }; return b;
   }));
 }
+function desenharKpis() {
+  if (!resumo) return;
+  const card = (classe, valor, texto) => el('div', { class: 'kpi ' + classe }, el('b', {}, String(valor)), el('span', {}, texto));
+  $('#kpis').replaceChildren(
+    card('fila', resumo.aberto, 'Abertos, aguardando'),
+    card('atend', resumo.em_atendimento, 'Em atendimento'),
+    card('venc' + (resumo.sla_vencido ? ' tem' : ''), resumo.sla_vencido, 'SLA vencido'),
+    card('ok', resumo.resolvido + resumo.fechado, 'Resolvidos ou fechados'));
+}
+function desenharLista() {
+  const q = $('#busca').value.trim().toLowerCase();
+  const itens = q ? cache.filter((c) => `${c.titulo} ${c.laboratorio} ${c.descricao}`.toLowerCase().includes(q)) : cache;
+  $('#lista').replaceChildren(...itens.map(linha));
+  $('#vazio').textContent = q ? 'Nenhum chamado encontrado para essa busca.' : 'Nenhum chamado nesta visão. Abra um chamado no formulário.';
+  $('#vazio').hidden = itens.length > 0; $('#lista').hidden = itens.length === 0;
+}
 async function carregar() {
   try {
     const filtro = ABAS.find((a) => a[0] === aba)[2];
     const [lista, r] = await Promise.all([api('GET', '/chamados' + (filtro ? '?status=' + filtro : '')), api('GET', '/chamados/resumo')]);
-    resumo = r; desenharAbas();
-    $('#lista').replaceChildren(...lista.map(linha));
-    $('#vazio').hidden = lista.length > 0; $('#lista').hidden = lista.length === 0;
+    resumo = r; cache = lista; desenharAbas(); desenharKpis(); desenharLista();
   } catch (e) { avisar(e.message, true); }
 }
 async function mudar(id, status, solucao) {
@@ -197,6 +232,7 @@ $('#form').onsubmit = async (ev) => {
   carregar();
 };
 $('#demo').onchange = carregar;
+$('#busca').oninput = desenharLista;
 async function saude() {
   const s = $('#saude');
   try { await api('GET', '/health'); s.textContent = 'Banco conectado'; s.className = 'saude ok'; }
