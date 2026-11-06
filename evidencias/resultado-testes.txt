@@ -1,0 +1,33 @@
+﻿
+sexta-feira, 6 de novembro de 2026 07:30:00
+
+
+
+> helpdesk-laboratorios@1.0.0 test
+> node --test
+
+Ô£ö POST /chamados v├ílido -> 201 e prazo P1 = abertura + 4 h (195.6263ms)
+Ô£ö POST /chamados com prioridade P7 -> 400 (CA5) (36.9672ms)
+Ô£ö PATCH aberto -> fechado direto -> 409 (CA1) (15.0192ms)
+Ô£ö PATCH em_atendimento -> resolvido sem solu├º├úo -> 400 (CA2) (13.1501ms)
+Ô£ö PATCH em_atendimento -> resolvido com solu├º├úo -> 200 (8.7892ms)
+Ô£ö chamado inexistente -> 404; id n├úo num├®rico -> 400 (15.671ms)
+Ô£ö filtro de status inv├ílido -> 400 (13.3693ms)
+Ô£ö banco fora do ar -> 503 sem detalhes internos (17.0509ms)
+Ô£ö CA3: P1 aberto 19:00 -> prazo 23:00 do mesmo dia (3.8353ms)
+Ô£ö RF2: prazos P2=8h, P3=24h, P4=72h (0.3152ms)
+Ô£ö CA5: prioridade P7 -> erro (400) (0.7296ms)
+Ô£ö chamado valido nao gera erros (1.9601ms)
+Ô£ö CA1: aberto -> fechado direto -> 409 (1.5314ms)
+Ô£ö CA2: em_atendimento -> resolvido sem solucao -> 400 (0.2746ms)
+Ô£ö transicoes validas (0.2391ms)
+Ô£ö status inexistente -> 400; fechado e final -> 409 (0.1948ms)
+Ô£ö RF6: SLA vencido so se nao resolvido/fechado (0.3556ms)
+Ôä╣ tests 17
+Ôä╣ suites 0
+Ôä╣ pass 17
+Ôä╣ fail 0
+Ôä╣ cancelled 0
+Ôä╣ skipped 0
+Ôä╣ todo 0
+Ôä╣ duration_ms 967.6013
