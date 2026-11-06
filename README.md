@@ -25,7 +25,7 @@ Os problemas dos laboratórios (projetor, rede, software) são relatados no corr
 | RF5 | Solução obrigatória para resolver | Implementado |
 | RF6 | Indicar "SLA vencido" | Implementado |
 | CA1 a CA5 | Critérios de aceitação | CA1, CA2, CA3 e CA5 em teste automatizado; CA4 depende do banco real (ver seção 7) |
-| Geral | Interface web e requisições em `.http` | Implementado (`frotend/` e `backend/requisicoes.http`) |
+| Geral | Interface web e requisições em `.http` | Implementado (`frontend/` e `backend/requisicoes.http`) |
 | Geral | Persistência em banco, consultas parametrizadas, `DATABASE_URL` fora do código | Implementado; prova de persistência pendente |
 | Geral | `GET /health` testa o banco; erros 400, 404, 409 e 503 sem detalhes internos | Implementado |
 | Geral | Deploy no Azure App Service e evidências E1 a E6 | [PREENCHER pelo grupo] |
@@ -142,8 +142,8 @@ O `.env` nunca vai para o Git (está no `.gitignore`).
 
 ### Plano de implantação no Azure
 
-1. Grupo de recursos `rg-cloud-gXX`, com as marcas `aula = cloud-challenge` e `grupo = gXX`.
-2. App Service Linux, runtime Node 20, plano Gratuito F1, nome `app-cloud-gXX-iniciais`.
+1. Grupo de recursos `rg-helpdesk-gXX`, com as marcas `aula = cloud-challenge` e `grupo = gXX`.
+2. App Service Linux, runtime Node 20, plano Gratuito F1, nome `app-helpdesk-gXX-iniciais`.
 3. PostgreSQL Servidor Flexível 16, Burstable B1ms, acesso público, permitir serviços do Azure e adicionar o IP de quem vai rodar o `schema.sql`.
 4. Rodar `banco/schema.sql` no banco.
 5. No App Service, criar `DATABASE_URL` em Configurações > Variáveis de ambiente.
