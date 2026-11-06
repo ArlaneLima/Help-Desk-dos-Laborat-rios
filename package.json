@@ -2,9 +2,10 @@
   "name": "helpdesk-laboratorios",
   "version": "1.0.0",
   "private": true,
-  "main": "server.js",
+  "description": "Cloud Challenge - Desafio 04: Help Desk dos Laboratórios",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node backend/server.js",
     "test": "node --test"
   },
   "engines": { "node": ">=20" },

@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const r = require('./regras');
 
@@ -16,8 +17,9 @@ function erroDeConexao(e) {
     c.startsWith('08') || c.startsWith('57P') || /timeout|terminated/i.test(e.message || '');
 }
 
-function criarApp(pool) {
+function criarApp(pool, frontDir = path.join(__dirname, '..', '..', 'frontend')) {
   const app = express();
+  app.disable('x-powered-by');
   app.use(express.json({ limit: '10kb' }));
 
   app.get('/health', async (req, res) => {
@@ -32,7 +34,7 @@ function criarApp(pool) {
   // RF1 + RF2
   app.post('/chamados', h(async (req, res) => {
     const { erros, dados } = r.validarNovoChamado(req.body);
-    if (erros.length) return res.status(400).json({ erro: 'dados invalidos', detalhes: erros });
+    if (erros.length) return res.status(400).json({ erro: 'dados inválidos', detalhes: erros });
 
     const abertoEm = new Date();
     const prazo = r.calcularPrazo(abertoEm, dados.prioridade);
@@ -44,35 +46,47 @@ function criarApp(pool) {
     res.status(201).json(rows[0]);
   }));
 
-  // RF3: prioridade, depois antiguidade; filtro opcional por status
+  // RF3: prioridade, depois antiguidade; ?status=aberto ou ?status=aberto,em_atendimento
   app.get('/chamados', h(async (req, res) => {
-    const { status } = req.query;
-    if (status !== undefined && !r.STATUS.includes(status)) {
+    const filtro = req.query.status === undefined ? null : String(req.query.status).split(',').map((x) => x.trim());
+    if (filtro && !filtro.every((x) => r.STATUS.includes(x))) {
       return res.status(400).json({ erro: `status deve ser um de: ${r.STATUS.join(', ')}` });
     }
     const { rows } = await pool.query(
       `SELECT ${COLUNAS} FROM chamados
-       WHERE ($1::text IS NULL OR status = $1::text)
+       WHERE ($1::text[] IS NULL OR status = ANY($1::text[]))
        ORDER BY prioridade ASC, aberto_em ASC`,
-      [status ?? null]
+      [filtro]
     );
     res.json(rows);
   }));
 
+  // Extra: contagem por status (alimenta as abas da interface)
+  app.get('/chamados/resumo', h(async (req, res) => {
+    const { rows } = await pool.query(
+      `SELECT status, COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE prazo_sla < now() AND status NOT IN ('resolvido','fechado'))::int AS vencidos
+         FROM chamados GROUP BY status`
+    );
+    const out = { aberto: 0, em_atendimento: 0, resolvido: 0, fechado: 0, total: 0, sla_vencido: 0 };
+    for (const x of rows) { out[x.status] = x.total; out.total += x.total; out.sla_vencido += x.vencidos; }
+    res.json(out);
+  }));
+
   app.get('/chamados/:id', h(async (req, res) => {
-    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ erro: 'id invalido' });
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ erro: 'id inválido' });
     const { rows } = await pool.query(`SELECT ${COLUNAS} FROM chamados WHERE id = $1`, [req.params.id]);
-    if (!rows.length) return res.status(404).json({ erro: 'chamado nao encontrado' });
+    if (!rows.length) return res.status(404).json({ erro: 'chamado não encontrado' });
     res.json(rows[0]);
   }));
 
   // RF4 + RF5 (regra central)
   app.patch('/chamados/:id/status', h(async (req, res) => {
-    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ erro: 'id invalido' });
+    if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ erro: 'id inválido' });
     const { status: novo, solucao } = req.body || {};
 
     const atual = await pool.query('SELECT status FROM chamados WHERE id = $1', [req.params.id]);
-    if (!atual.rows.length) return res.status(404).json({ erro: 'chamado nao encontrado' });
+    if (!atual.rows.length) return res.status(404).json({ erro: 'chamado não encontrado' });
 
     const problema = r.validarMudancaStatus(atual.rows[0].status, novo, solucao);
     if (problema) return res.status(problema.codigo).json({ erro: problema.erro });
@@ -91,14 +105,16 @@ function criarApp(pool) {
     res.json(rows[0]);
   }));
 
-  app.use((req, res) => res.status(404).json({ erro: 'rota nao encontrada' }));
+  app.use(express.static(frontDir));
+
+  app.use((req, res) => res.status(404).json({ erro: 'rota não encontrada' }));
 
   // Nunca expoe detalhes internos
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
-    if (err.type === 'entity.parse.failed') return res.status(400).json({ erro: 'JSON invalido' });
+    if (err.type === 'entity.parse.failed') return res.status(400).json({ erro: 'JSON inválido' });
     if (err.type === 'entity.too.large') return res.status(400).json({ erro: 'corpo grande demais' });
-    if (erroDeConexao(err)) return res.status(503).json({ erro: 'servico temporariamente indisponivel' });
+    if (erroDeConexao(err)) return res.status(503).json({ erro: 'serviço temporariamente indisponível' });
     console.error(err);
     res.status(500).json({ erro: 'erro interno' });
   });

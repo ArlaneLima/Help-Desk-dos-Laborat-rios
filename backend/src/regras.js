@@ -27,9 +27,9 @@ function validarNovoChamado(body) {
     prioridade: texto(b.prioridade).toUpperCase(),
   };
   const erros = [];
-  if (dados.titulo.length < 3 || dados.titulo.length > 100) erros.push('titulo deve ter entre 3 e 100 caracteres');
-  if (dados.descricao.length < 5 || dados.descricao.length > 1000) erros.push('descricao deve ter entre 5 e 1000 caracteres');
-  if (dados.laboratorio.length < 1 || dados.laboratorio.length > 50) erros.push('laboratorio deve ter entre 1 e 50 caracteres');
+  if (dados.titulo.length < 3 || dados.titulo.length > 100) erros.push('título deve ter entre 3 e 100 caracteres');
+  if (dados.descricao.length < 5 || dados.descricao.length > 1000) erros.push('descrição deve ter entre 5 e 1000 caracteres');
+  if (dados.laboratorio.length < 1 || dados.laboratorio.length > 50) erros.push('laboratório deve ter entre 1 e 50 caracteres');
   if (!Object.hasOwn(HORAS_SLA, dados.prioridade)) erros.push('prioridade deve ser P1, P2, P3 ou P4');
   return { erros, dados };
 }
@@ -37,9 +37,9 @@ function validarNovoChamado(body) {
 // RF4 + RF5 + CA1 + CA2. Retorna null se valido, ou { codigo, erro }.
 function validarMudancaStatus(atual, novo, solucao) {
   if (!STATUS.includes(novo)) return { codigo: 400, erro: `status deve ser um de: ${STATUS.join(', ')}` };
-  if (!TRANSICOES[atual].includes(novo)) return { codigo: 409, erro: `transicao ${atual} -> ${novo} nao permitida` };
+  if (!TRANSICOES[atual].includes(novo)) return { codigo: 409, erro: `transição de "${atual}" para "${novo}" não permitida` };
   if (novo === 'resolvido' && texto(solucao).length < 3) {
-    return { codigo: 400, erro: 'solucao e obrigatoria para marcar como resolvido' };
+    return { codigo: 400, erro: 'a solução é obrigatória para marcar como resolvido' };
   }
   return null;
 }
