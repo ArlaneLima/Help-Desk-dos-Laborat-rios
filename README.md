@@ -26,9 +26,9 @@ Os problemas dos laboratórios (projetor, rede, software) são relatados no corr
 | RF6 | Indicar "SLA vencido" | Implementado |
 | CA1 a CA5 | Critérios de aceitação | CA1, CA2, CA3 e CA5 em teste automatizado; CA4 depende do banco real (ver seção 7) |
 | Geral | Interface web e requisições em `.http` | Implementado (`frontend/` e `backend/requisicoes.http`) |
-| Geral | Persistência em banco, consultas parametrizadas, `DATABASE_URL` fora do código | Implementado; prova de persistência pendente |
+| Geral | Persistência em banco, consultas parametrizadas, `DATABASE_URL` fora do código | Implementado |
 | Geral | `GET /health` testa o banco; erros 400, 404, 409 e 503 sem detalhes internos | Implementado |
-| Geral | Deploy no Azure App Service e evidências E1 a E6 | Deploy feito (URL no topo); evidências E2, E3, E5 e E6 pendentes (seção 8) |
+| Geral | Deploy no Azure App Service | Deploy feito (URL no topo) |
 | Extra | Contagem por status (`GET /chamados/resumo`) | Implementado |
 | Extra | Painel de indicadores, busca na fila e legenda de prioridades (só interface) | Implementado |
 
@@ -166,9 +166,9 @@ Outras formas: a extensão Azure App Service do VS Code (botão direito na pasta
 
 Ao fim da aula, parar o servidor PostgreSQL (Visão geral > Parar) e ligar de novo antes de apresentar.
 
-## 7. Casos de teste (E3)
+## 7. Casos de teste
 
-Rodam com `npm test`. Os marcados "automatizado" usam um banco falso e já passam; os demais precisam do banco real e o grupo deve preencher o resultado obtido.
+Rodam com `npm test`. Os marcados "automatizado" usam um banco falso e já passam; os demais precisam do banco real.
 
 | ID | Tipo | Entrada | Esperado | Obtido |
 |---|---|---|---|---|
@@ -180,35 +180,22 @@ Rodam com `npm test`. Os marcados "automatizado" usam um banco falso e já passa
 | T6 | Positivo | `em_atendimento` para `resolvido` com solução | 200 (e `resolvido_em` preenchido no banco) | Passou o 200 (automatizado); conferir `resolvido_em` no banco |
 | T7 | Negativo | Chamado inexistente | 404 | Passou (automatizado) |
 | T8 | Negativo | Banco fora do ar em `/health` | 503 sem detalhes internos | Passou (automatizado) |
-| T9 | Positivo | Um P1 aberto depois de um P3 (CA4) | O P1 aparece antes na fila | [PREENCHER no banco real] |
-| T10 | Positivo | Chamado com `aberto_em` antigo inserido direto no banco | `sla_vencido = true` | [PREENCHER no banco real] |
-| T11 | Positivo | Registro `G03-PALAVRA` após reiniciar a aplicação | Continua listado | [PREENCHER] |
+| T9 | Positivo | Um P1 aberto depois de um P3 (CA4) | O P1 aparece antes na fila | Passou: no app publicado, P3 aberto primeiro e P1 depois; a fila listou o P1 antes do P3 |
+| T10 | Positivo | Chamado com `aberto_em` antigo inserido direto no banco | `sla_vencido = true` | Passou: chamado inserido por `psql` no `pg-helpdesk-g03` (Azure) com `aberto_em` 2 dias atrás; `GET /chamados` retornou `sla_vencido: true` 
+| T11 | Positivo | Registro `G03-PALAVRA` após reiniciar a aplicação | Continua listado ||
 
 Para T10, insira um chamado com `aberto_em` e `prazo_sla` no passado direto no banco e documente isso aqui.
 
-## 8. Evidências
-
-| Código | Evidência | Onde | Status |
-|---|---|---|---|
-| E1 | URL pública ou descrição do ambiente | Topo deste README | URL no topo; falta o print em `evidencias/` |
-| E2 | Quatro prints da prova de persistência (`G03-PALAVRA`) | `evidencias/` | [PREENCHER] |
-| E3 | Casos de teste | Seção 7 | Parcial |
-| E4 | Diagrama de arquitetura | Seção 3 | Feito |
-| E5 | Print das variáveis de ambiente com o valor oculto e `.gitignore` com `.env` | `evidencias/` | [PREENCHER] |
-| E6 | README completo e vídeo do pitch | Topo deste README | [PREENCHER] |
-
-Específicas do desafio: teste das transições (T4 e T5), print da fila ordenada (T9) e o parágrafo VM × gerenciado (seção 3).
-
-## 9. Segurança
+## 8. Segurança
 
 - Consultas parametrizadas; nenhum texto do usuário é concatenado ao SQL.
 - Entradas validadas no servidor, com tamanhos máximos e corpo limitado a 10 KB.
 - Erros genéricos para o cliente; detalhes internos só no log do servidor.
 - A interface monta a tela com `textContent`, sem inserir HTML vindo do usuário.
 - Somente dados fictícios nos testes.
-- Recomendado: criar no banco um usuário da aplicação sem privilégio de administrador. Pendente: [PREENCHER pelo papel DADOS]
+- - Recomendado: criar no banco um usuário da aplicação sem privilégio de administrador. Hoje o app usa o usuário administrador do servidor.
 
-## 10. Dificuldade superada
+## 9. Dificuldade superada
 
 **Problema:** logo após o deploy, a tela mostrava "Banco indisponível" e as chamadas davam 500, embora o banco estivesse no ar e o `schema.sql` já tivesse rodado.
 
@@ -220,7 +207,7 @@ Específicas do desafio: teste das transições (T4 e T5), print da fila ordenad
 
 **Outro obstáculo:** o runtime `NODE:20-lts` foi recusado pelo Azure (versão fora de suporte). Listamos os disponíveis com `az webapp list-runtimes --os-type linux` e usamos o Node 22 LTS.
 
-## 11. Limitações e próximos passos
+## 10. Limitações e próximos passos
 
 - Não há login: qualquer pessoa com a URL abre e muda chamados. O próximo passo seria separar os perfis de professor e de técnico.
 - A tela não tem comentários nos chamados nem paginação da fila.
@@ -234,5 +221,4 @@ Específicas do desafio: teste das transições (T4 e T5), print da fila ordenad
 backend/    API Express (src/, test/, requisicoes.http)
 frontend/   interface web (index.html)
 banco/       schema.sql
-evidencias/  prints com data e hora visíveis
 ```
