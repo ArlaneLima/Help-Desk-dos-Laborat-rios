@@ -8,7 +8,7 @@ Cloud Challenge, Desafio 04 (Cloud Computing, Senac 2026.2, prof. Roni Maciel).
 | Integrantes e papéis | [ Otávio, Ian DEV / Dayana, Arlane DADOS / Otávio, Daniel, Sabrina NUVEM / Otávio, Sabrina QA] |
 | Nível de implantação | A (URL pública no Azure App Service) |
 | URL pública (nível A) | [https://app-helpdesk-g03.azurewebsites.net] |
-| Vídeo do pitch (90 s) | [PREENCHER] |
+| Vídeo do pitch (90 s) | [Evidencias - HELPDESK.mp4] |
 
 ## 1. Problema e usuário
 
