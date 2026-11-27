@@ -4,7 +4,7 @@ const r = require('./regras');
 
 const iniciadoEm = new Date().toISOString();
 
-// sla_vencido calculado na consulta (RF6); o prazo em si e gravado na abertura (RF2)
+
 const COLUNAS = `id, titulo, descricao, laboratorio, prioridade, status, solucao,
   aberto_em, prazo_sla, resolvido_em,
   (prazo_sla < now() AND status NOT IN ('resolvido','fechado')) AS sla_vencido`;
@@ -31,7 +31,7 @@ function criarApp(pool, frontDir = path.join(__dirname, '..', '..', 'frontend'))
     }
   });
 
-  // RF1 + RF2
+  
   app.post('/chamados', h(async (req, res) => {
     const { erros, dados } = r.validarNovoChamado(req.body);
     if (erros.length) return res.status(400).json({ erro: 'dados inválidos', detalhes: erros });
@@ -46,7 +46,7 @@ function criarApp(pool, frontDir = path.join(__dirname, '..', '..', 'frontend'))
     res.status(201).json(rows[0]);
   }));
 
-  // RF3: prioridade, depois antiguidade; ?status=aberto ou ?status=aberto,em_atendimento
+  
   app.get('/chamados', h(async (req, res) => {
     const filtro = req.query.status === undefined ? null : String(req.query.status).split(',').map((x) => x.trim());
     if (filtro && !filtro.every((x) => r.STATUS.includes(x))) {
@@ -61,7 +61,7 @@ function criarApp(pool, frontDir = path.join(__dirname, '..', '..', 'frontend'))
     res.json(rows);
   }));
 
-  // Extra: contagem por status (alimenta as abas da interface)
+
   app.get('/chamados/resumo', h(async (req, res) => {
     const { rows } = await pool.query(
       `SELECT status, COUNT(*)::int AS total,
@@ -80,7 +80,7 @@ function criarApp(pool, frontDir = path.join(__dirname, '..', '..', 'frontend'))
     res.json(rows[0]);
   }));
 
-  // RF4 + RF5 (regra central)
+  
   app.patch('/chamados/:id/status', h(async (req, res) => {
     if (!/^\d+$/.test(req.params.id)) return res.status(400).json({ erro: 'id inválido' });
     const { status: novo, solucao } = req.body || {};
@@ -91,7 +91,7 @@ function criarApp(pool, frontDir = path.join(__dirname, '..', '..', 'frontend'))
     const problema = r.validarMudancaStatus(atual.rows[0].status, novo, solucao);
     if (problema) return res.status(problema.codigo).json({ erro: problema.erro });
 
-    // AND status = $4 evita corrida: se alguem mudou antes, nenhuma linha e atualizada
+    
     const { rows } = await pool.query(
       `UPDATE chamados
           SET status = $1::text,
@@ -109,8 +109,8 @@ function criarApp(pool, frontDir = path.join(__dirname, '..', '..', 'frontend'))
 
   app.use((req, res) => res.status(404).json({ erro: 'rota não encontrada' }));
 
-  // Nunca expoe detalhes internos
-  // eslint-disable-next-line no-unused-vars
+  
+  
   app.use((err, req, res, next) => {
     if (err.type === 'entity.parse.failed') return res.status(400).json({ erro: 'JSON inválido' });
     if (err.type === 'entity.too.large') return res.status(400).json({ erro: 'corpo grande demais' });
