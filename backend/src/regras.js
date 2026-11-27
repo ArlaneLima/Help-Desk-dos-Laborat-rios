@@ -1,7 +1,6 @@
-// Regras de negocio puras (sem banco), faceis de testar.
 const HORAS_SLA = { P1: 4, P2: 8, P3: 24, P4: 72 };
 
-// RF4: transicoes como dados. Validar vira uma linha.
+
 const TRANSICOES = {
   aberto: ['em_atendimento'],
   em_atendimento: ['aberto', 'resolvido'],
@@ -12,12 +11,12 @@ const STATUS = Object.keys(TRANSICOES);
 
 const texto = (v) => (typeof v === 'string' ? v.trim() : '');
 
-// RF2: prazo = abertura + horas da prioridade
+
 function calcularPrazo(abertoEm, prioridade) {
   return new Date(abertoEm.getTime() + HORAS_SLA[prioridade] * 3600 * 1000);
 }
 
-// RF1 + CA5
+
 function validarNovoChamado(body) {
   const b = body && typeof body === 'object' ? body : {};
   const dados = {
@@ -34,7 +33,7 @@ function validarNovoChamado(body) {
   return { erros, dados };
 }
 
-// RF4 + RF5 + CA1 + CA2. Retorna null se valido, ou { codigo, erro }.
+
 function validarMudancaStatus(atual, novo, solucao) {
   if (!STATUS.includes(novo)) return { codigo: 400, erro: `status deve ser um de: ${STATUS.join(', ')}` };
   if (!TRANSICOES[atual].includes(novo)) return { codigo: 409, erro: `transição de "${atual}" para "${novo}" não permitida` };
@@ -44,7 +43,7 @@ function validarMudancaStatus(atual, novo, solucao) {
   return null;
 }
 
-// RF6
+
 function slaVencido(chamado, agora = new Date()) {
   const aberto = !['resolvido', 'fechado'].includes(chamado.status);
   return aberto && agora > new Date(chamado.prazo_sla);
